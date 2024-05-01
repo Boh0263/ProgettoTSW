@@ -7,10 +7,10 @@ CREATE TABLE IF NOT EXISTS Utente(
   Password VARCHAR(255) NOT NULL,
   Nome VARCHAR(255),
   Cognome VARCHAR(255),
-  Data_nascita DATE,
-  Email VARCHAR(255) UNIQUE,
+  CF VARCHAR(16),
+  Email VARCHAR(255) UNIQUE NOT NULL,
 
-  Tipo ENUM('R','NR','A')
+  Tipo ENUM('R','NR','A') NOT NULL
   );
 
 CREATE TABLE IF NOT EXISTS Indirizzo (
