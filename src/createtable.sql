@@ -9,8 +9,9 @@ CREATE TABLE IF NOT EXISTS Utente(
   Cognome VARCHAR(255),
   Data_nascita DATE,
   Email VARCHAR(255) UNIQUE,
-  Tipo ENUM('R','NR')
-);
+
+  Tipo ENUM('R','NR','A')
+  );
 
 CREATE TABLE IF NOT EXISTS Indirizzo (
   ID INT auto_increment PRIMARY KEY,
