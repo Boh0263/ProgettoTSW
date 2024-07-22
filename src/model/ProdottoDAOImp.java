@@ -15,7 +15,7 @@ import model.Accessorio;
 public class ProdottoDAOImp implements ProdottoDAO {
 
 	@Override
-	public Prodotto getbyID(int id) throws SQLException {
+	public Prodotto doRetrieveByKey(int id) throws SQLException {
 		// TODO 
 		return null;
 	}
@@ -28,14 +28,57 @@ public class ProdottoDAOImp implements ProdottoDAO {
 
 	@Override
 	public int update(Prodotto t) throws SQLException {
-		// TODO 
-		return 0;
+		
+		String[] queries = { 
+			    "UPDATE Prodotto SET Prezzo = COALESCE(?, Prezzo), IVA = COALESCE(?, IVA), Giacenza = COALESCE(?, Giacenza), Descrizione = COALESCE(?, Descrizione), img1 = COALESCE(?, img1), img2 = COALESCE(?, img2), img3 = COALESCE(?, img3) WHERE Nome = ?;",
+			    "UPDATE Arma SET Materiale = COALESCE(?, Materiale), Tipo = COALESCE(?, Tipo), Utilizzo = COALESCE(?, Utilizzo) WHERE ID_Prodotto = ?",
+			    "UPDATE Abbigliamento SET Tipo = COALESCE(?, Tipo), Materiale = COALESCE(?, Materiale) WHERE ID_Prodotto = ?",
+			    "UPDATE Armatura SET Materiale = COALESCE(?, Materiale), Pezzo = COALESCE(?, Pezzo) WHERE ID_Prodotto = ?"
+			};
+		
+		Connection con = null;
+		PreparedStatement ps = null;
+		int modifiche = 0;
+		
+		try {
+			con = DMConnectionPool.getConnection();
+			ps = con.prepareStatement(queries[0]);
+			ps.setDouble(1, t.getPrezzo());
+			ps.setDouble(2, t.getIVA());
+			ps.setInt(3, t.getGiacenza());
+			ps.setString(4, t.getDescrizione());
+			ps.setInt(5, t.getImg1());
+			ps.setInt(6, t.getImg2());
+			ps.setInt(7, t.getImg3());
+			ps.setString(8, t.getNome());
+			
+			modifiche += ps.executeUpdate();
+			if (t instanceof Arma) {
+				ps = con.prepareStatement(queries[1]);
+				ps.setString(1, ((Arma) t).getMateriale());
+				ps.setString(2, ((Arma) t).getTipo());
+				ps.setString(3, ((Arma) t).getUtilizzo());
+				ps.setString(3, t.getNome());
+				
+				modifiche += ps.executeUpdate();
+			} else if (t instanceof Abbigliamento) {
+				ps = con.prepareStatement(queries[2]);
+				ps.setString(1, ((Abbigliamento) t).getTipo());
+				ps.setString(2, ((Abbigliamento) t).getGenere());
+				ps.setString(2, t.getNome());
+				
+				modifiche += ps.executeUpdate();
+			}					
+		} finally {
+			if (ps != null) con.close();
+		}
+		
+		return modifiche;
+	
 	}
 
-
-	@SuppressWarnings("resource")
 	@Override
-	public Collection<Prodotto> doretrieveAll(String order) throws SQLException {
+	public synchronized Collection<Prodotto> doretrieveAll(String order) throws SQLException {
 		Connection con = null;
 		PreparedStatement ps = null;
 		
@@ -64,9 +107,9 @@ public class ProdottoDAOImp implements ProdottoDAO {
 						rs.getDouble("Prezzo"),
 						rs.getString("Descrizione"),
 						rs.getInt("Giacenza"),
-						rs.getString("img1"),
-						rs.getString("img2"),
-						rs.getString("img3"),
+						rs.getInt("img1"),
+						rs.getInt("img2"),
+						rs.getInt("img3"),
 						rs.getInt("ID_Abbigliamento"),
 						rs.getString("Tipo"),
 						rs.getString("Materiale")
@@ -83,9 +126,9 @@ public class ProdottoDAOImp implements ProdottoDAO {
 						rs.getDouble("Prezzo"),
 						rs.getString("Descrizione"),
 						rs.getInt("Giacenza"),
-						rs.getString("img1"),
-						rs.getString("img2"),
-						rs.getString("img3"),
+						rs.getInt("img1"),
+						rs.getInt("img2"),
+						rs.getInt("img3"),
 						rs.getInt("ID_Accessorio")
 						);
 				prodotti.add(prod);
@@ -99,9 +142,9 @@ public class ProdottoDAOImp implements ProdottoDAO {
 						rs.getDouble("Prezzo"),
 						rs.getString("Descrizione"),
 						rs.getInt("Giacenza"),
-						rs.getString("img1"),
-						rs.getString("img2"),
-						rs.getString("img3"),
+						rs.getInt("img1"),
+						rs.getInt("img2"),
+						rs.getInt("img3"),
 						rs.getInt("ID_Arma"),
 						rs.getString("Materiale"),
 						rs.getString("Tipo"),
@@ -118,9 +161,9 @@ public class ProdottoDAOImp implements ProdottoDAO {
 						rs.getDouble("Prezzo"),
 						rs.getString("Descrizione"),
 						rs.getInt("Giacenza"),
-						rs.getString("img1"),
-						rs.getString("img2"),
-						rs.getString("img3"),
+						rs.getInt("img1"),
+						rs.getInt("img2"),
+						rs.getInt("img3"),
 						rs.getInt("ID_Armatura"),
 						rs.getString("Materiale"),
 						rs.getString("Prezzo") 
@@ -164,16 +207,16 @@ public class ProdottoDAOImp implements ProdottoDAO {
 			ps.setInt(3, t.getGiacenza());
 			ps.setDouble(4, t.getIVA());
 			ps.setString(5, t.getDescrizione());
-			ps.setString(6, t.getImg1());
+			ps.setInt(6, t.getImg1());
 			
-			if (!t.getImg2().isEmpty()) {
-				ps.setString(7, t.getImg2());
+			if (t.getImg2() != 1) {
+				ps.setInt(7, t.getImg2());
 				} else {
 					ps.setNull(8, java.sql.Types.NULL);
 			}
 			
-			if (!t.getImg3().isEmpty()) {
-				ps.setString(8, t.getImg3());
+			if (t.getImg3() != 1) {
+				ps.setInt(8, t.getImg3());
 				} else {
 					ps.setNull(8, java.sql.Types.NULL);
 			}
@@ -204,7 +247,7 @@ public class ProdottoDAOImp implements ProdottoDAO {
 			else if (t instanceof Abbigliamento) {
 				psg = con.prepareStatement(insertSQL4);
 				psg.setString(1, tempID);
-				psg.setString(2, ((Abbigliamento) t).getMateriale());
+				psg.setString(2, ((Abbigliamento) t).getGenere());
 				psg.setString(3, ((Abbigliamento) t).getTipo());
 				} else con.rollback();
 			} else con.rollback();
@@ -240,21 +283,29 @@ public class ProdottoDAOImp implements ProdottoDAO {
 			ps.setString(1, code);
 			ResultSet rs = ps.executeQuery();
 			if(rs.next()) {
-				categoria = rs.getString("Categoria");
+				
+				if(rs.getString("ID_Abbigliamento") != null) categoria = "Abbigliamento";
+                else if(rs.getString("ID_Accessorio") != null) categoria = "Accessorio";
+                else if(rs.getString("ID_Arma") != null) categoria = "Arma";
+                else if(rs.getString("ID_Armatura") != null) categoria = "Armatura";
+                else throw new SQLException("Errore nel recupero del prodotto");
+				
 				switch(categoria) {
+				
 				case "Abbigliamento": {
 				  obj = new Abbigliamento(
 						  rs.getString("Nome"),
 						  rs.getDouble("Prezzo"),
 						  rs.getString("Descrizione"),
 						  rs.getInt("Giacenza"),
-						  rs.getString("img1"),
-						  rs.getString("img2"),
-						  rs.getString("img3"),
+						  rs.getInt("img1"),
+						  rs.getInt("img2"),
+						  rs.getInt("img3"),
 						  rs.getInt("ID_Abbigliamento"),
 						  rs.getString("Tipo"),
 						  rs.getString("Materiale")
 						  );
+				  		break;
 
 				}
 				case "Accessorio": {
@@ -263,11 +314,12 @@ public class ProdottoDAOImp implements ProdottoDAO {
 							rs.getDouble("Prezzo"),
 							rs.getString("Descrizione"),
 							rs.getInt("Giacenza"),
-							rs.getString("img1"),
-							rs.getString("img2"),
-							rs.getString("img3"),
+							rs.getInt("img1"),
+							rs.getInt("img2"),
+							rs.getInt("img3"),
 							rs.getInt("ID_Accessorio")
 							  );
+					break;
 				}
 				case "Arma": {
 					obj = new Arma(
@@ -275,14 +327,15 @@ public class ProdottoDAOImp implements ProdottoDAO {
 							  rs.getDouble("Prezzo"),
 							  rs.getString("Descrizione"),
 							  rs.getInt("Giacenza"),
-							  rs.getString("img1"),
-							  rs.getString("img2"),
-							  rs.getString("img3"),
+							  rs.getInt("img1"),
+							  rs.getInt("img2"),
+							  rs.getInt("img3"),
 							  rs.getInt("ID_Arma"),
 							  rs.getString("Materiale"),
 							  rs.getString("Tipo"),
 							  rs.getString("Utilizzo")
 							  );
+					break;
 				}
 				case "Armatura": {
 					obj = new Armatura(
@@ -290,15 +343,16 @@ public class ProdottoDAOImp implements ProdottoDAO {
 					  rs.getDouble("Prezzo"),
 					  rs.getString("Descrizione"),
 					  rs.getInt("Giacenza"),
-					  rs.getString("img1"),
-					  rs.getString("img2"),
-					  rs.getString("img3"),
+					  rs.getInt("img1"),
+					  rs.getInt("img2"),
+					  rs.getInt("img3"),
 					  rs.getInt("ID_Armatura"),
 					  rs.getString("Materiale"),
 					  rs.getString("Pezzo")
 					);
+					break;
 				}
-				default : {obj = null;}
+				default : {obj = null; break;}
 				}
 				
 			}
@@ -342,7 +396,7 @@ public class ProdottoDAOImp implements ProdottoDAO {
 			PreparedStatement ps = null;
 			int result = 0;
 			
-			String deleteSQL = "DELETE FROM Prodotto WHERE Prodotto.ID = ?";
+			String deleteSQL = "DELETE FROM Prodotto WHERE Prodotto.Nome = ?";
 				try {
 					con = DMConnectionPool.getConnection();
 					ps = con.prepareStatement(deleteSQL);
@@ -359,7 +413,7 @@ public class ProdottoDAOImp implements ProdottoDAO {
 		}
 
 	@Override
-	public Collection<Prodotto> doRetrieveByCategory(String tipo) throws SQLException {
+	public synchronized Collection<Prodotto> doRetrieveByCategory(String tipo) throws SQLException {
 		Connection con = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -379,12 +433,12 @@ public class ProdottoDAOImp implements ProdottoDAO {
 						  rs.getDouble("Prezzo"),
 						  rs.getString("Descrizione"),
 						  rs.getInt("Giacenza"),
-						  rs.getString("img1"),
-						  rs.getString("img2"),
-						  rs.getString("img3"),
+						  rs.getInt("img1"),
+						  rs.getInt("img2"),
+						  rs.getInt("img3"),
 						  rs.getInt("ID_Abbigliamento"),
 						  rs.getString("Tipo"),
-						  rs.getString("Materiale")
+						  rs.getString("Genere")
 						  ));
 				  }
 				  break;
@@ -396,9 +450,9 @@ public class ProdottoDAOImp implements ProdottoDAO {
 							rs.getDouble("Prezzo"),
 							rs.getString("Descrizione"),
 							rs.getInt("Giacenza"),
-							rs.getString("img1"),
-							rs.getString("img2"),
-							rs.getString("img3"),
+							rs.getInt("img1"),
+							rs.getInt("img2"),
+							rs.getInt("img3"),
 							rs.getInt("ID_Accessorio")
 						  ));
 				       }
@@ -411,9 +465,9 @@ public class ProdottoDAOImp implements ProdottoDAO {
 							  rs.getDouble("Prezzo"),
 							  rs.getString("Descrizione"),
 							  rs.getInt("Giacenza"),
-							  rs.getString("img1"),
-							  rs.getString("img2"),
-							  rs.getString("img3"),
+							  rs.getInt("img1"),
+							  rs.getInt("img2"),
+							  rs.getInt("img3"),
 							  rs.getInt("ID_Arma"),
 							  rs.getString("Materiale"),
 							  rs.getString("Tipo"),
@@ -429,9 +483,9 @@ public class ProdottoDAOImp implements ProdottoDAO {
 					  rs.getDouble("Prezzo"),
 					  rs.getString("Descrizione"),
 					  rs.getInt("Giacenza"),
-					  rs.getString("img1"),
-					  rs.getString("img2"),
-					  rs.getString("img3"),
+					  rs.getInt("img1"),
+					  rs.getInt("img2"),
+					  rs.getInt("img3"),
 					  rs.getInt("ID_Armatura"),
 					  rs.getString("Materiale"),
 					  rs.getString("Pezzo")
@@ -439,7 +493,7 @@ public class ProdottoDAOImp implements ProdottoDAO {
 					}
 					break;
 				}
-				default : {obj.add(new Abbigliamento("Nome",0,"Descrizione",0,"img1","img2","img3",1,"","")); break;}
+				default : {obj.add(new Abbigliamento("Nome", 0, "Descrizione", 0, 1, 1, 1, 1, "", "")); break;}
 				}
 			} finally {
 				try {

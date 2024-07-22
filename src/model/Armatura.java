@@ -17,7 +17,16 @@ public class Armatura extends Prodotto {
 		this.Materiale = "";
 		this.Pezzo = "";
 	}
-	public Armatura(String ID, double Prezzo, String Descrizione, int Giacenza, String img1, String img2, String img3, int ID_Armatura, String Materiale, String Pezzo) {
+	
+	public Armatura(String nome) {
+		super(nome);
+		this.ID_Armatura = -1;
+		this.Materiale = "";
+		this.Pezzo = "";
+	}
+	
+	
+	public Armatura(String ID, double Prezzo, String Descrizione, int Giacenza, int img1, int img2, int img3, int ID_Armatura, String Materiale, String Pezzo) {
 		super(ID, Prezzo, Descrizione, Giacenza, img1, img2, img3);
 		this.ID_Armatura = ID_Armatura;
 		this.Materiale = Materiale;

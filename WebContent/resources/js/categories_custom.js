@@ -1,21 +1,30 @@
+/* JS Document */
 
 
-jQuery(document).ready(function($)
-{
+$(document).ready(function($) {
 	"use strict";
-
-	
 
 	var header = $('.header');
 	var topNav = $('.top_nav')
 	var mainSlider = $('.main_slider');
-	var dropdown = $('.dropdown_container');
+	var hamburger = $('.dropdown_container');
 	var menu = $('.dropdown_menu');
 	var menuActive = false;
-	var dropdownClose = $('.dropdown_close');
+	var hamburgerClose = $('.dropdown_close');
 	var fsOverlay = $('.fs_menu_overlay');
 
+	
 	setHeader();
+	initFixProductBorder();
+	
+		function initDynamicContent() {
+		initFixProductBorder();
+		initFavorite();
+		initIsotopeFiltering();
+		initPriceSlider();
+		initCheckboxes();
+	}
+
 
 	$(window).on('resize', function()
 	{
@@ -27,13 +36,12 @@ jQuery(document).ready(function($)
 	{
 		setHeader();
 	});
+	
+	
 
 	initMenu();
 	initFavorite();
-	initFixProductBorder();
-	initIsotopeFiltering();
-	initPriceSlider();
-	initCheckboxes();
+	setTimeout(initDynamicContent, 500);
 
 	
 
@@ -67,11 +75,13 @@ jQuery(document).ready(function($)
 		}
 	}
 
+
+
 	function initMenu()
 	{
-		if(dropdown.length)
+		if(hamburger.length)
 		{
-			dropdown.on('click', function()
+			hamburger.on('click', function()
 			{
 				if(!menuActive)
 				{
@@ -91,9 +101,9 @@ jQuery(document).ready(function($)
 			});
 		}
 
-		if(dropdownClose.length)
+		if(hamburgerClose.length)
 		{
-			dropdownClose.on('click', function()
+			hamburgerClose.on('click', function()
 			{
 				if(menuActive)
 				{
@@ -132,7 +142,6 @@ jQuery(document).ready(function($)
 	function openMenu()
 	{
 		menu.addClass('active');
-		// menu.css('right', "0");
 		fsOverlay.css('pointer-events', "auto");
 		menuActive = true;
 	}
@@ -143,7 +152,8 @@ jQuery(document).ready(function($)
 		fsOverlay.css('pointer-events', "none");
 		menuActive = false;
 	}
-	
+
+
 
     function initFavorite()
     {
@@ -177,7 +187,7 @@ jQuery(document).ready(function($)
     	}
     }
 
-// Fix border Prodotti
+
     function initFixProductBorder()
     {
     	if($('.product_filter').length)
@@ -185,13 +195,13 @@ jQuery(document).ready(function($)
 			var products = $('.product_filter:visible');
     		var wdth = window.innerWidth;
 
-    		// reset border
+    	
     		products.each(function()
     		{
     			$(this).css('border-right', 'solid 1px #e9e9e9');
     		});
 
-    		// if window width is 991px or less
+    		//se la finestra è più piccola di 480px
 
     		if(wdth < 480)
 			{
@@ -244,7 +254,7 @@ jQuery(document).ready(function($)
 				}
 			}
 
-		       //Per finestre più larghe di 992px:
+			//se la finestra è più grande di 992px
 			else
 			{
 				if(products.length < 5)
@@ -259,6 +269,153 @@ jQuery(document).ready(function($)
 				}
 			}	
     	}
-      }
+    }
+    
+    /* 
+
+	 Filtering con Isotope:
+
+	*/
+
+    function initIsotopeFiltering()
+    {
+    	var sortTypes = $('.type_sorting_btn');
+    	var sortNums = $('.num_sorting_btn');
+    	var sortTypesSelected = $('.sorting_type .item_sorting_btn is-checked span');
+    	var filterButton = $('.filter_button');
+
+    	if($('.product-grid').length)
+    	{
+    		$('.product-grid').isotope({
+    			itemSelector: '.product-item',
+	            getSortData: {
+	            	price: function(itemElement)
+	            	{
+	            		var priceEle = $(itemElement).find('.product_price').text().replace( '$', '' ).replace(',' , '.' );
+	            		return parseFloat(priceEle);
+	            	},
+	            	name: '.product_name'
+	            },
+	            animationOptions: {
+	                duration: 750,
+	                easing: 'linear',
+	                queue: false
+	            }
+	        });
+
+    		
+	        sortTypes.each(function()
+	        {
+	        	$(this).on('click', function()
+	        	{
+	        		$('.type_sorting_text').text($(this).text());
+	        		var option = $(this).attr('data-isotope-option');
+	        		option = JSON.parse( option );
+    				$('.product-grid').isotope( option );
+	        	});
+	        });
+
+	       // Filtro per numero di prodotti visualizzati.
+	        sortNums.each(function()
+	        {
+	        	$(this).on('click', function()
+	        	{
+	        		var numSortingText = $(this).text();
+					var numFilter = ':nth-child(-n+' + numSortingText + ')';
+	        		$('.num_sorting_text').text($(this).text());
+    				$('.product-grid').isotope({filter: numFilter });
+	        	});
+	        });	
+
+	        // Filtro basato sul prezzo nello slider.
+	        filterButton.on('click', function()
+	        {
+	        	$('.product-grid').isotope({
+		            filter: function()
+		            {
+		            	var priceRange = $('#amount').val();
+			        	var priceMin = parseFloat(priceRange.split('-')[0].replace('$', ''));
+			        	var priceMax = parseFloat(priceRange.split('-')[1].replace('$', ''));
+			        	var itemPrice = $(this).find('.product_price').clone().children().remove().end().text().replace( '$', '' ).replace(',' , '.');
+
+			        	return (itemPrice > priceMin) && (itemPrice < priceMax);
+		            },
+		            animationOptions: {
+		                duration: 750,
+		                easing: 'linear',
+		                queue: false
+		            }
+		        });
+	        });
+    	}
+    }
+
+    /* 
+
+	7. Init Slider Prezzo
+
+	*/
+
+    function initPriceSlider()
+    {
+		$( "#slider-range" ).slider(
+		{
+			range: true,
+			min: 0,
+			max: 1000,
+			values: [ 0, 580 ],
+			slide: function( event, ui )
+			{
+				$( "#amount" ).val( "$" + ui.values[ 0 ] + " - $" + ui.values[ 1 ] );
+			}
+		});
+			
+		$( "#amount" ).val( "$" + $( "#slider-range" ).slider( "values", 0 ) + " - $" + $( "#slider-range" ).slider( "values", 1 ) );
+    }
+
+    /* 
+
+	8. Init Filter Checkboxes
+
+	*/
+
+    function initCheckboxes()
+    {
+    	if($('.checkboxes li').length)
+    	{
+    		var boxes = $('.checkboxes li');
+
+    		boxes.each(function()
+    		{
+    			var box = $(this);
+
+    			box.on('click', function()
+    			{
+    				if(box.hasClass('active'))
+    				{
+    					box.find('i').removeClass('fa-square');
+    					box.find('i').addClass('fa-square-o');
+    					box.toggleClass('active');
+    				}
+    				else
+    				{
+    					box.find('i').removeClass('fa-square-o');
+    					box.find('i').addClass('fa-square');
+    					box.toggleClass('active');
+    				}
+    				
+    			});
+    		});
+
+    		if($('.show_more').length)
+    		{
+    			var checkboxes = $('.checkboxes');
+
+    			$('.show_more').on('click', function()
+    			{
+    				checkboxes.toggleClass('active');
+    			});
+    		}
+    	};
     }
 });

@@ -1,16 +1,38 @@
+/* JS Document */
+
+/******************************
+
+[Table of Contents]
+
+1. Vars and Inits
+2. Set Header
+3. Init Menu
+4. Init Timer
+5. Init Favorite
+6. Init Fix Product Border
+7. Init Isotope Filtering
+8. Init Slider
+
+
+******************************/
+
 jQuery(document).ready(function($)
 {
 	"use strict";
 
-	
+	/* 
+
+	1. Vars and Inits
+
+	*/
 
 	var header = $('.header');
 	var topNav = $('.top_nav')
 	var mainSlider = $('.main_slider');
-	var dropdown = $('.dropdown_container');
+	var hamburger = $('.dropdown_container');
 	var menu = $('.dropdown_menu');
 	var menuActive = false;
-	var dropdownClose = $('.dropdown_close');
+	var hamburgerClose = $('.dropdown_close');
 	var fsOverlay = $('.fs_menu_overlay');
 
 	setHeader();
@@ -27,8 +49,17 @@ jQuery(document).ready(function($)
 	});
 
 	initMenu();
+	initTimer();
 	initFavorite();
+	initFixProductBorder();
+	initIsotopeFiltering();
+	initSlider();
 
+	/* 
+
+	2. Set Header
+
+	*/
 
 	function setHeader()
 	{
@@ -60,11 +91,17 @@ jQuery(document).ready(function($)
 		}
 	}
 
+	/* 
+
+	3. Init Menu
+
+	*/
+
 	function initMenu()
 	{
-		if(dropdown.length)
+		if(hamburger.length)
 		{
-			dropdown.on('click', function()
+			hamburger.on('click', function()
 			{
 				if(!menuActive)
 				{
@@ -84,9 +121,9 @@ jQuery(document).ready(function($)
 			});
 		}
 
-		if(dropdownClose.length)
+		if(hamburgerClose.length)
 		{
-			dropdownClose.on('click', function()
+			hamburgerClose.on('click', function()
 			{
 				if(menuActive)
 				{
@@ -125,6 +162,7 @@ jQuery(document).ready(function($)
 	function openMenu()
 	{
 		menu.addClass('active');
+		// menu.css('right', "0");
 		fsOverlay.css('pointer-events', "auto");
 		menuActive = true;
 	}
@@ -136,6 +174,7 @@ jQuery(document).ready(function($)
 		menuActive = false;
 	}
 
+	
 
     function initFavorite()
     {
@@ -169,19 +208,26 @@ jQuery(document).ready(function($)
     	}
     }
 
+    /* 
 
-    function initFixProductBorder() //Nel caso in cui volessimo aggiungere prodotti in offerta nella pagina home del sito
+	6. Init Fix Product Border
+
+	*/
+
+    function initFixProductBorder()
     {
     	if($('.product_filter').length)
     	{
 			var products = $('.product_filter:visible');
     		var wdth = window.innerWidth;
 
+    		// reset border
     		products.each(function()
     		{
     			$(this).css('border-right', 'solid 1px #e9e9e9');
     		});
 
+    		// if window width is 991px or less
 
     		if(wdth < 480)
 			{
@@ -234,6 +280,7 @@ jQuery(document).ready(function($)
 				}
 			}
 
+			//if window width is larger than 991px
 			else
 			{
 				if(products.length < 5)
@@ -247,6 +294,88 @@ jQuery(document).ready(function($)
 					product.css('border-right', 'none');
 				}
 			}	
+    	}
+    }
+
+    /* 
+
+	7. Init Isotope Filtering
+
+	*/
+
+    function initIsotopeFiltering()
+    {
+    	if($('.grid_sorting_button').length)
+    	{
+    		$('.grid_sorting_button').click(function()
+	    	{
+	    		// putting border fix inside of setTimeout because of the transition duration
+	    		setTimeout(function()
+		        {
+		        	initFixProductBorder();
+		        },500);
+
+		        $('.grid_sorting_button.active').removeClass('active');
+		        $(this).addClass('active');
+		 
+		        var selector = $(this).attr('data-filter');
+		        $('.product-grid').isotope({
+		            filter: selector,
+		            animationOptions: {
+		                duration: 750,
+		                easing: 'linear',
+		                queue: false
+		            }
+		        });
+
+		        
+		         return false;
+		    });
+    	}
+    }
+
+    /* 
+
+	8. Init Slider
+
+	*/
+
+    function initSlider()
+    {
+    	if($('.product_slider').length)
+    	{
+    		var slider1 = $('.product_slider');
+
+    		slider1.owlCarousel({
+    			loop:false,
+    			dots:false,
+    			nav:false,
+    			responsive:
+				{
+					0:{items:1},
+					480:{items:2},
+					768:{items:3},
+					991:{items:4},
+					1280:{items:5},
+					1440:{items:5}
+				}
+    		});
+
+    		if($('.product_slider_nav_left').length)
+    		{
+    			$('.product_slider_nav_left').on('click', function()
+    			{
+    				slider1.trigger('prev.owl.carousel');
+    			});
+    		}
+
+    		if($('.product_slider_nav_right').length)
+    		{
+    			$('.product_slider_nav_right').on('click', function()
+    			{
+    				slider1.trigger('next.owl.carousel');
+    			});
+    		}
     	}
     }
 });

@@ -1,38 +1,46 @@
-CREATE DATABASE IF NOT EXISTS Kiitz;
+-CREATE DATABASE IF NOT EXISTS Kiitz;
 Use Kiitz;
 
 CREATE TABLE IF NOT EXISTS Utente(
-  ID INT auto_increment PRIMARY KEY,
+  ID INT auto_increment NOT NULL PRIMARY KEY,
   Username VARCHAR(255) NOT NULL UNIQUE,
-  Password VARCHAR(255) NOT NULL,
-  Nome VARCHAR(255),
-  Cognome VARCHAR(255),
+  Password VARCHAR(64) NOT NULL,
+  Nome VARCHAR(255) NOT NULL,
+  Cognome VARCHAR(255) NOT NULL,
   CF VARCHAR(16),
-  Email VARCHAR(255) UNIQUE NOT NULL,
-
-  Tipo ENUM('R','NR','A') NOT NULL
-  );
+  Data_Nascita DATE,
+  telefono VARCHAR(16),
+  Email VARCHAR(255) UNIQUE,
+  Tipo ENUM('R','NR','A')
+);
 
 CREATE TABLE IF NOT EXISTS Indirizzo (
   ID INT auto_increment PRIMARY KEY,
-  Utente_ID INT,
-  Indirizzo_breve VARCHAR(255),
-  CAP VARCHAR(255),
-  Località VARCHAR(255),
-  Provincia VARCHAR(255),
-  Nazione VARCHAR(255),
-  FOREIGN KEY (Utente_ID) REFERENCES Utente(ID)
-);
+  Utente_ID INT NOT NULL,
+  Via VARCHAR(255) NOT NULL,
+  CAP VARCHAR(255) NOT NULL,
+  Città VARCHAR(255) NOT NULL,
+  Provincia VARCHAR(255) NOT NULL,
+  FOREIGN KEY (Utente_ID) REFERENCES Utente(ID) ON DELETE CASCADE ON UPDATE CASCADE
+); 
 
 CREATE TABLE IF NOT EXISTS Ordine (
 ID INT auto_increment PRIMARY KEY,
 Ragione_sociale VARCHAR(35) NOT NULL,
-Indirizzo_breve VARCHAR(50) NOT NULL,
-Imposta DECIMAL(10,2),
-Sconto DECIMAL(10,2),
+Indirizzo_breve VARCHAR(255) NOT NULL,
+Imposta DECIMAL(10,2) DEFAULT 0,
+Sconto DECIMAL(10,2) DEFAULT 0,
 Totale DECIMAL(10,4) NOT NULL,
-Stato VARCHAR(30) NOT NULL
+Data_Ordine DATETIME NOT NULL,
+Stato VARCHAR(30) NOT NULL DEFAULT 'NON EVASO'
 );
+
+CREATE TABLE IF NOT EXISTS Immagine (
+	ID INT PRIMARY KEY AUTO_INCREMENT,
+	Placeholder VARCHAR(30) NOT NULL,
+	MimeType ENUM('image/jpeg', 'image/png', 'image/gif') NOT NULL,
+	Content MEDIUMBLOB NOT NULL
+	);
 
 CREATE TABLE IF NOT EXISTS Prodotto (
  Nome VARCHAR(255) PRIMARY KEY,
@@ -40,24 +48,36 @@ CREATE TABLE IF NOT EXISTS Prodotto (
  IVA DECIMAL(10,2) NOT NULL,
  Giacenza INT DEFAULT 0,
  Descrizione VARCHAR(255) NOT NULL,
- img1 VARCHAR(255) NOT NULL,
- img2 VARCHAR(255) NOT NULL,
- img3 VARCHAR(255) NOT NULL
+ img1 INT NOT NULL DEFAULT 1,
+ img2 INT NOT NULL DEFAULT 1,
+ img3 INT NOT NULL DEFAULT 1,
+ FOREIGN KEY (img1) REFERENCES Immagine(ID) ON DELETE SET DEFAULT ON UPDATE CASCADE,
+ FOREIGN KEY (img2) REFERENCES Immagine(ID) ON DELETE SET DEFAULT ON UPDATE CASCADE,
+ FOREIGN KEY (img3) REFERENCES Immagine(ID) ON DELETE SET DEFAULT ON UPDATE CASCADE
  );
  
 CREATE TABLE IF NOT EXISTS Contenuto (
-Riassunto VARCHAR(255) NOT NULL,
 Prezzo_Lordo DECIMAL(10,4) NOT NULL,
 Qta INT NOT NULL,
 ID_Ordine INT NOT NULL,
 ID_Prodotto VARCHAR(255) NOT NULL,
+Nome_Prodotto VARCHAR(255) NOT NULL,
 FOREIGN KEY (ID_Ordine) REFERENCES Ordine(ID),
 FOREIGN KEY (ID_Prodotto) REFERENCES Prodotto(Nome),
 PRIMARY KEY (ID_Ordine, ID_Prodotto)
 );
 
+CREATE TABLE IF NOT EXISTS Fattura ( 
+ID INT PRIMARY KEY AUTO_INCREMENT,
+ID_Ordine INT NOT NULL,
+Data_Fattura DATE NOT NULL,
+Contenuto MEDIUMTEXT NOT NULL,
+FOREIGN KEY (ID_Ordine) REFERENCES Ordine(ID) ON DELETE CASCADE
+);
+
+
 CREATE TABLE IF NOT EXISTS Arma (
-  ID_Arma VARCHAR(255) PRIMARY KEY,
+  ID_Arma INT PRIMARY KEY AUTO_INCREMENT,
   Materiale VARCHAR(255),
   Tipo ENUM('Melee', 'Ranged'),
   Utilizzo ENUM('War', 'Hunting', 'Decorative'),
@@ -66,17 +86,38 @@ CREATE TABLE IF NOT EXISTS Arma (
 );
 
 CREATE TABLE IF NOT EXISTS Accessorio (
-  ID_Accessorio VARCHAR(255) PRIMARY KEY,
+  ID_Accessorio INT PRIMARY KEY AUTO_INCREMENT,
   ID_Prodotto VARCHAR(255) NOT NULL,
   FOREIGN KEY (ID_Prodotto) REFERENCES Prodotto(Nome)
 );
-Use kiitz;
+
 CREATE TABLE IF NOT EXISTS Abbigliamento (
   ID_Abbigliamento INT PRIMARY KEY AUTO_INCREMENT,
   ID_Prodotto VARCHAR(255) NOT NULL,
   Tipo ENUM('Maglietta', 'Pantalone', 'Calzatura'),
-  Materiale VARCHAR(255),
+  Genere ENUM('M', 'F', 'U'),
   FOREIGN KEY (ID_Prodotto) REFERENCES Prodotto(Nome)
 );
 
+CREATE TABLE IF NOT EXISTS Armatura (
+    ID_Armatura INT PRIMARY KEY AUTO_INCREMENT,
+    Materiale ENUM('Ferro', 'Maglia', 'Cuoio'),
+    Pezzo ENUM('Helmet', 'Chestplate', 'Leggings', 'Boots'),
+    ID_Prodotto VARCHAR(255),
+    FOREIGN KEY (ID_Prodotto) REFERENCES Prodotto(Nome)
+);
+
+CREATE TABLE IF NOT EXISTS Recensione (
+	ID_Recensione int NOT NULL AUTO_INCREMENT,
+    ID_Prodotto varchar(255) NOT NULL,
+    Email_Utente varchar(255) NOT NULL,
+    Votazione tinyint unsigned NOT NULL,
+    Commento text,
+    Data_Recensione date NOT NULL,
+    PRIMARY KEY(ID_Recensione, ID_Prodotto),
+    FOREIGN KEY(ID_Prodotto) REFERENCES Prodotto(Nome) ON UPDATE cascade ON DELETE cascade,
+);
+
+
+	
 
